@@ -1,0 +1,101 @@
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script>
+    var app = angular.module('myApp',[]);
+    app.controller('formController',function($scope,$http)
+    {
+        $scope.signup = function()
+        {
+                const entered_username = $scope.user_name;
+                const entered_password = $scope.password;
+                const entered_name = $scope.name;
+                const entered_email = $scope.email;
+
+                var data = {username : entered_username , password : entered_password , name : entered_name, email : entered_email};
+                var config = {headers : {'Content-Type':'application/json'}};
+                $http.post("http://localhost:3000/user/register",data,config)
+                .then(function(response)
+                {
+                    if(response.data.success == false)
+                    {
+                        $scope.response = "ERROR. PLEASE RETRY.";
+                    }
+                    else
+                    {
+                        $scope.response = "USER REGISTERED!"
+                        $scope.login = 1;
+                    }
+                });
+    
+        }
+        
+    });
+</script>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+
+<form ng-app="myApp" ng-controller="formController" nonvalidate  name="myForm">
+    
+    <div>NAME : <input type="text" name="name" ng-model="name" required></div>
+    
+    <span ng-show="myForm.name.$touched && myForm.name.$invalid">Please Enter Your Name.</span>
+
+    <div>EMAIL ID: <input type="email" name="email" ng-model="email" required></div>
+    
+    <span ng-show="myForm.email.$touched && myForm.email.$invalid">Please Enter Your E-Mail ID.</span>
+
+    
+    <div>USER NAME : <input type="text" name = "user_name" ng-model = "user_name" required></div>
+    
+    <span ng-show="myForm.user_name.$touched && myForm.user_name.$invalid">Please Enter User Name.</span>
+    
+    <div>PASSWORD : <input type="password" name = "password" ng-model = "password" required></div>
+   
+    <span ng-show="myForm.password.$touched && myForm.password.$invalid">Please Enter Password.</span>
+    
+    <div><button ng-disabled = "myForm.user_name.$pristine || myForm.user_name.$invalid || myForm.password.$pristine || myForm.password.$invalid || myForm.name.$pristine || myForm.name.$invalid || myForm.email.$pristine || myForm.email.$invalid" ng-click="signup()">SIGNUP</button></div>
+    <div>{{response}}</div>
+
+    <a ng-show="login == 1" href="http://localhost:3000/">HOME</a>
+
+</form>
+</body>
+</html>
+
+
+
+<div class="container">
+        <div class="row">
+            
+            <div class="card" style="width: 400px;">
+                <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;" ng-style="myColor">
+                    <h4 class="card-title">SLOT : P1</h4>
+                        <p class="card-text">Some example text.</p>
+                            <a href="#" class="btn btn-primary">See Profile</a>
+                        </div>
+                    </div>
+    
+            <div class="card" style="width: 400px;">
+                <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;">
+                    <h4 class="card-title">SLOT : P2</h4>
+                        <p class="card-text">Some example text.</p>
+                            <a href="#" class="btn btn-primary">See Profile</a>
+                          </div>
+                        </div>
+    
+            <div class="card" style="width: 400px;">
+                    <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;">
+                        <h4 class="card-title">SLOT : P3</h4>
+                            <p class="card-text">Some example text.</p>
+                                <a href="#" class="btn btn-primary">See Profile</a>
+                            </div>
+                            </div>
+                        </div>
+          </div>

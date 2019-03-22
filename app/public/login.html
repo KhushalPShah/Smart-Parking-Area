@@ -1,0 +1,65 @@
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script>
+    var app = angular.module('myApp',[]);
+    app.controller('formController',function($window,$scope,$http)
+    {
+        localStorage.setItem('LoggedInUser',null);
+        $scope.login = function()
+        {
+            const entered_username = $scope.user_name;
+            const entered_password = $scope.password;
+            var data = {username : entered_username , password : entered_password};
+            var config = {headers : {'Content-Type':'application/json'}};
+            $http.post("http://localhost:3000/user/authenticate",data,config)
+            .then(function(response)
+            {
+                if(response.data.success == false)
+                {
+                    $scope.response = "USER NOT FOUND. PLEASE REGISTER WITH US!";
+                }
+                else if(response.data.success == true)
+                {
+
+                    localStorage.setItem('LoggedInUser',JSON.stringify({Token : response.data.token, User : response.data.User}));
+                    localStorage.setItem('LoggedInBoolean',true);
+                    $window.location.href = 'http://localhost:3000/user/profilePage';
+                }
+            });
+        }
+        
+    });
+</script>
+
+<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+</head>
+
+<body>
+<div class="container">
+    <dv>PLEASE LOGIN HERE TO BOOK A PARKING.</dv>
+<form ng-app="myApp" ng-controller="formController" nonvalidate  name="myForm">
+    <div>USER NAME :</div> 
+    <div><input type="text" name = "user_name" ng-model = "user_name" required></div>
+    
+    <span class = "alert alert-danger" ng-show="myForm.user_name.$touched && myForm.user_name.$invalid">Please Enter User Name.</span>
+    
+    <div>PASSWORD :</div> 
+        <div><input type="password" name = "password" ng-model = "password" required></div>
+   
+    <span class = "alert alert-danger" ng-show="myForm.password.$touched && myForm.password.$invalid">Please Enter Password.</span>
+    
+    <div><button type = "button" class = "btn btn-primary" ng-disabled = "myForm.user_name.$pristine || myForm.user_name.$invalid || myForm.password.$pristine || myForm.password.$invalid" ng-click="login()">LOGIN</button>
+    
+    <a href="http://localhost:3000/signup" class="btn btn-link">SIGNUP</a>
+    <div>{{response}}</div>
+    
+</form>
+</div>
+</body>
+</html>
+

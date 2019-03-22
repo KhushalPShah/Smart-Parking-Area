@@ -1,0 +1,248 @@
+<html ng-app="profileApp" ng-controller="Profilecontroller">
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script>
+    var app = angular.module('profileApp',[]);
+    app.controller('Profilecontroller',function($scope,$http)
+    {
+        
+        $scope.disable_check = 1;
+        $scope.show_details = 0;
+        var siteId = JSON.parse(localStorage.getItem('siteId'));
+        if(siteId.siteId === 0)
+        {
+            $scope.siteId = "Inorbit";
+        }
+        else if(siteId.siteId === 1)
+        {
+            $scope.siteId = "Infinity";
+        }
+        else if(siteId.siteId === 2)
+        {
+            $scope.siteId = "Raghuleela";
+        }
+        var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+        var token = loggedInUser.Token;
+        $http({
+            method : "GET",
+            url : "http://localhost:3000/user/profile",
+            headers : {
+                'Content-Type' : 'application/json',
+                Authorization : token
+            }
+        }).then(function(Response)
+        {   
+            var response = Response.data;
+            
+            if(response.success == true)
+            {
+                var name = response.user.data.name;
+                var email = response.user.data.email;
+                var username = response.user.data.username;
+                $scope.name = name.toString();
+                $scope.email = email.toString();
+                $scope.username = username.toString();
+                $scope.disable_check = 0;
+            }
+            else
+            {
+                $scope.response = "SESSION EXPIRED! PLEASE LOGIN ONCE AGAIN";
+                $scope.login = 1;
+            }
+            
+        });
+        $scope.book_slot = function()
+        {
+            $scope.disable_book = 1;
+            
+            var from_arr= $scope.time_from.toString().split(" ");
+            var time_arr = from_arr[4].toString().split(":");
+
+            var time_from_hour = time_arr[0];
+            var time_from_mins = time_arr[1];
+
+            var to_arr = $scope.time_to.toString().split(" ");
+            time_arr = to_arr[4].toString().split(":");
+            var time_to_hour = time_arr[0];
+            var time_to_mins = time_arr[1];
+            
+            var date_now = new Date();
+            var now_arr = date_now.toString().split(" ");
+            var time_now_arr = now_arr[4].toString().split(":");
+
+            var time_now_hour = time_now_arr[0];
+            var time_now_mins = time_now_arr[1];
+
+            var bookSlotNumber = $scope.book_slot_number;
+
+            var siteId = JSON.parse(localStorage.getItem('siteId'));
+            
+            var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+            var User = loggedInUser.User;
+            var token = loggedInUser.Token;
+            
+            var siteId = JSON.parse(localStorage.getItem('siteId'));
+            var data = {User : User, siteId : siteId ,slotNumber : bookSlotNumber ,time_from_hour : time_from_hour ,time_from_mins : time_from_mins , time_to_hour : time_to_hour, time_to_mins : time_to_mins};
+            var config = {headers : {'Content-Type':'application/json'}};
+            $http({
+                method : "POST",
+                url : 'http://localhost:3000/parkingplaces/bookSlot/',
+                headers : {
+                    'Content-Type' : 'application/json',
+                    Authorization : token
+                },
+                data : data
+            }).
+            then(function(Response)
+            {
+                $scope.response = Response.data;
+                if(Response.data.success === true)
+                {
+                    $scope.show_details = 1;
+                    $scope.booking_user_name = Response.data.User.name; 
+                    $scope.booking_email_id = Response.data.User.email;
+                    $scope.booking_siteName = Response.data.BookingDetails.siteId;
+                    if(Response.data.BookingDetails.siteId === "0")
+                    {
+                        $scope.booking_siteName = "Inorbit";
+                    }
+                    else if(Response.data.BookingDetails.siteId === "1")
+                    {
+                        $scope.booking_siteName = "Infinity";
+                    }
+                    else if(Response.data.BookingDetails.siteId === "2")
+                    {
+                        $scope.booking_siteName = "Raghuleela";
+                    }
+                    $scope.booking_from_time = Response.data.From;
+                    $scope.booking_to_time = Response.data.To;
+                    $scope.booking_slot = Response.data.BookingDetails.AllotedSlot;
+                }
+            });
+        };
+        $scope.check_availability = function()
+        {
+            var from_arr= $scope.time_from.toString().split(" ");
+            var time_arr = from_arr[4].toString().split(":");
+
+            var time_from_hour = time_arr[0];
+            var time_from_mins = time_arr[1];
+
+            var to_arr = $scope.time_to.toString().split(" ");
+            time_arr = to_arr[4].toString().split(":");
+            var time_to_hour = time_arr[0];
+            var time_to_mins = time_arr[1];
+            
+            var date_now = new Date();
+            var now_arr = date_now.toString().split(" ");
+            var time_now_arr = now_arr[4].toString().split(":");
+
+            var time_now_hour = time_now_arr[0];
+            var time_now_mins = time_now_arr[1];
+
+            if(time_now_hour > time_from_hour)
+            {
+                $scope.response = "Please Select Proper Hour";
+            }
+            else
+            {
+                if(time_now_hour === time_from_hour)
+                {
+                    if(time_now_mins > time_from_mins)
+                    {
+                        $scope.response = "Please Select proper Minutes";
+                    }
+                }
+                else
+                {
+                    var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+                    var token = loggedInUser.Token;
+                    var User = loggedInUser.User;
+                    var siteId = JSON.parse(localStorage.getItem('siteId'));
+                    var data = {User : User, siteId : siteId , time_from_hour : time_from_hour ,time_from_mins : time_from_mins , time_to_hour : time_to_hour, time_to_mins : time_to_mins};
+                    var config = {headers : {'Content-Type':'application/json'}};
+                    $http({
+                    method : "POST",
+                    url : 'http://localhost:3000/parkingplaces/checkParkingAvail/',
+                    headers : {
+                        'Content-Type' : 'application/json',
+                        Authorization : token
+                    },
+                    data : data
+                    }).
+                    then(function(Response)
+                    {
+                        $scope.response = Response.data.success;
+                        if(Response.data.success)
+                        {
+                            if(Response.data.length === 3)
+                            {
+                                $scope.disable_book = 1;
+                                $scope.response = "Parking for the Selected Time Slot is Full";
+                            }
+                            else 
+                            {
+                                $scope.disable_book = 0;
+                                $scope.book_slot_number = (3 - Response.data.length);
+                            }
+                        }
+                        else
+                        {
+                            $scope.response = "SESSION EXPIRED! PLEASE LOGIN";
+                            $scope.login = 1;
+                            $scope.show_details = 0;
+                        }
+                    });
+                }
+            }
+        };
+    });
+</script>
+
+<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+</head>
+<body>
+    <div>PROFILE PAGE :</div>
+    <div ng-show="disable_check==0" >NAME : </div>
+    <div ng-show="disable_check==0" ng-model = "name">{{name}}</div>
+    <div ng-show="disable_check==0" >EMAIL : </div>
+    <div  ng-show="disable_check==0" ng-bind = "email">{{email}}</div>
+    <div ng-show="disable_check==0" >USER NAME : </div>
+    <div ng-show="disable_check==0" ng-bind = "username">{{username}}</div>
+    
+    <div ng-show="disable_check==0" >SITE NAME:</div>
+    <div ng-show="disable_check==0" >{{siteId}}</div>
+    <div>{{response}}</div>
+
+    <form nonvalidate name="formParkingTime">
+
+    <div ng-show="disable_check==0" >TIME FROM:</div>
+    <input ng-show="disable_check==0" type="time" ng-model="time_from" name="time_from" required>
+
+    <div ng-show="disable_check==0" >TIME TO:</div>
+    <input ng-show="disable_check==0" type="time" ng-model="time_to" name="time_to" required>
+
+    <button type = "button" ng-show="disable_check==0"  ng-click = "check_availability()">CHECK AVAILABILITY</button>
+    
+    <button type="button" ng-show="disable_book==0"   ng-click="book_slot()">BOOK SLOT</button>
+
+    <div><a ng-show="login == 1" href="http://localhost:3000/login">LOGIN</a></div>
+
+
+    </form>
+    <div ng-show="show_details==1">BOOKING DETAILS : </div>
+    <div ng-show="show_details==1">NAME OF :</div>
+    <div ng-show="show_details==1">{{booking_user_name}}</div>
+    <div ng-show="show_details==1" >{{booking_email_id}}</div>
+    <div ng-show="show_details==1" >{{booking_siteName}}</div>
+    <div ng-show="show_details==1" >{{booking_from_time}}</div>
+    <div ng-show="show_details==1" >{{booking_to_time}}</div>
+    <div ng-show="show_details==1" >{{booking_slot}}</div>
+    
+
+</body>
+</html>

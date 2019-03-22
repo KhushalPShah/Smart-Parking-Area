@@ -1,0 +1,121 @@
+<html lang="en">
+   <style>
+   
+   </style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script>
+    
+    var app = angular.module('myApp',[]);
+    app.controller('Profilecontroller',function($window,$scope,$http)
+    {
+        
+        var siteId = JSON.parse(localStorage.getItem('siteId'));
+        var data = {siteId : siteId};
+        
+        var config = {headers : {'Content-Type':'application/json'}};  
+        $http.post("http://localhost:3000/parkingplaces/getData",data,config)
+        .then(function(Response)
+        {
+            $scope.siteName = Response.data.siteName;
+            $scope.siteAddrTitle = Response.data.siteAddTitle;
+            $scope.siteAddrDetail = Response.data.siteAddDetail;
+            $scope.map = Response.data.mapUrl;
+        });
+        $scope.show_maps = function()
+        {
+            $window.location.href = $scope.map;
+        }
+        $scope.book = function()
+        {
+            var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+            if(loggedInUser === null)
+            {
+                $window.location.href = "http://localhost:3000/login";
+            }
+            var token = loggedInUser.Token;
+            $http({
+                method : "GET",
+                url : "http://localhost:3000/user/profile",
+                headers : {
+                    'Content-Type' : 'application/json',
+                    Authorization : token
+                }
+            }).then(function(Response)
+            {
+                    $scope.response = Response.data;
+                    if(Response.data.success === false)
+                    {
+                        //Login 
+                        $window.location.href = "http://localhost:3000/login";
+                    }
+                    else if(Response.data.success === true)
+                    {
+                        $window.location.href = "http://localhost:3000/user/profilePage";
+                    }
+            });
+        }
+    });
+</script>
+
+
+<head ng-app="myApp" ng-controller="Profilecontroller">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        
+</head>
+
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-4">
+        <div class="card" style="width: 300px;">
+            <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;">
+                <h4 class="card-title">SLOT : P1</h4>
+                    <p class="card-text">Some example text.</p>
+                        <a href="#" class="btn btn-primary">See Profile</a>
+                      </div>
+                    </div>
+                    </div>
+        <div class="col-lg-4">
+        <div class="card" style="width: 300px;">
+            <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;">
+                <h4 class="card-title">SLOT : P2</h4>
+                    <p class="card-text">Some example text.</p>
+                        <a href="#" class="btn btn-primary">See Profile</a>
+                      </div>
+                      </div>
+                      </div>
+
+                      <div class="col-lg-4">
+        <div class="card" style="width: 300px;">
+                <div class="card-body" style="box-shadow: 2px 2px 2px 2px ;">
+                    <h4 class="card-title">SLOT : P3</h4>
+                        <p class="card-text">Some example text.</p>
+                            <a href="#" class="btn btn-primary">See Profile</a>
+                          </div>
+                        </div>
+                    </div>
+      </div>
+    </div>
+      </div>
+    
+
+    
+</body>
+</html>
+
+
+<!-- <h1><i class="fa fa-map-marker" aria-hidden="true"></i>{{siteName}} 
+    <div align = "right"><img ng-click="show_maps()"  src="https://yt3.ggpht.com/a-/ACSszfE75PxxLubB00z_jHM6Xe-dGP19Lpp--WCRaw=s900-mo-c-c0xffffffff-rj-k-no" style="width:50px; height:50px;"></div>
+</h1>
+
+<h2>{{siteAddrTitle}}</h2>
+<h3>{{siteAddrDetail}}</h3>
+
+<button ng-click="book()" type="button" >BOOK A PARKING</button>
+<div>{{response}}</div>
+ -->

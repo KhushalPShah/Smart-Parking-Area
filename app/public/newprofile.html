@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
+    <script>
+        
+        var app = angular.module('profileApp',[]);
+        app.controller('Profilecontroller',function($window,$scope,$http)
+        {
+            $scope.p1_empty = 2;
+            $scope.p2_empty = 2;
+            $scope.p3_empty = 2;
+            $scope.p1_booked = 2;
+            $scope.p2_booked = 2;
+            $scope.p3_booked = 2;
+            $scope.show_booked_status = 0;
+            $scope.disable_check = 1;
+            
+            var siteId = JSON.parse(localStorage.getItem('siteId'));
+            if(siteId.siteId === 0)
+            {
+                $scope.siteId = "Inorbit";
+                $scope.siteAddrDetail = "Link Road, Malad (W), Mumbai."
+            }
+            else if(siteId.siteId === 1)
+            {
+                $scope.siteId = "Infinity";
+                $scope.siteAddrDetail = "Link Road, Malad (W), Mumbai."
+            }
+            else if(siteId.siteId === 2)
+            {
+                $scope.siteId = "Raghuleela";
+                $scope.siteAddrDetail = "Poinsur, Kandivali (W), Mumbai."
+            }
+            var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+            var token = loggedInUser.Token;
+            $http({
+                method : "GET",
+                url : "http://localhost:3000/user/profile",
+                headers : {
+                    'Content-Type' : 'application/json',
+                    Authorization : token
+                }
+            }).then(function(Response)
+            {   
+                var response = Response.data;
+                $scope.response = Response.data;
+                if(response.success == true)
+                {
+                    var name = response.user.data.name;
+                    var email = response.user.data.email;
+                    var username = response.user.data.username;
+                    var balance = response.user.data.balance;
+                    $scope.name = name.toString();
+                    $scope.email = email.toString();
+                    $scope.username = username.toString();
+                    $scope.balance = balance.toString();
+                    $scope.disable_check = 0;
+                }
+                else
+                {
+                    $scope.response = "SESSION EXPIRED! PLEASE LOGIN ONCE AGAIN";
+                    $scope.login = 1;
+                }
+                
+            });
+            $scope.book_slot = function()
+            {
+                $scope.disable_book = 1;
+                
+                var from_arr= $scope.time_from.toString().split(" ");
+                var time_arr = from_arr[4].toString().split(":");
+    
+                var time_from_hour = time_arr[0];
+                var time_from_mins = time_arr[1];
+    
+                var to_arr = $scope.time_to.toString().split(" ");
+                time_arr = to_arr[4].toString().split(":");
+                var time_to_hour = time_arr[0];
+                var time_to_mins = time_arr[1];
+                
+                var date_now = new Date();
+                var now_arr = date_now.toString().split(" ");
+                var time_now_arr = now_arr[4].toString().split(":");
+    
+                var time_now_hour = time_now_arr[0];
+                var time_now_mins = time_now_arr[1];
+    
+                var bookSlotNumber = $scope.book_slot_number;
+    
+                var siteId = JSON.parse(localStorage.getItem('siteId'));
+                
+                var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+                var User = loggedInUser.User;
+                var token = loggedInUser.Token;
+                
+                var siteId = JSON.parse(localStorage.getItem('siteId'));
+                var data = {User : User, siteId : siteId ,slotNumber : bookSlotNumber ,time_from_hour : time_from_hour ,time_from_mins : time_from_mins , time_to_hour : time_to_hour, time_to_mins : time_to_mins};
+                var config = {headers : {'Content-Type':'application/json'}};
+                $http({
+                    method : "POST",
+                    url : 'http://localhost:3000/parkingplaces/bookSlot/',
+                    headers : {
+                        'Content-Type' : 'application/json',
+                        Authorization : token
+                    },
+                    data : data
+                }).
+                then(function(Response)
+                {
+                    $scope.response = Response.data;
+                    if(Response.data.success === true)
+                    {
+                        $scope.show_booked_status = 0;
+                        $scope.booking_confirmed = 1;
+                        localStorage.setItem('LoggedInUser',JSON.stringify({Token : Response.data.token, User : Response.data.User}));
+                        $scope.balance = Response.data.User.balance;
+                        $scope.booking_user_name = Response.data.User.name; 
+                        $scope.booking_email_id = Response.data.User.email;
+                        $scope.booking_siteName = Response.data.BookingDetails.siteId;
+                        if(Response.data.BookingDetails.siteId === "0")
+                        {
+                            $scope.booking_siteName = "Inorbit";
+                        }
+                        else if(Response.data.BookingDetails.siteId === "1")
+                        {
+                            $scope.booking_siteName = "Infinity";
+                        }
+                        else if(Response.data.BookingDetails.siteId === "2")
+                        {
+                            $scope.booking_siteName = "Raghuleela";
+                        }
+                        $scope.booking_from_time = Response.data.From;
+                        $scope.booking_to_time = Response.data.To;
+                        $scope.booking_slot = Response.data.BookingDetails.AllotedSlot;
+                    }
+                });
+            };
+            $scope.log_out = function()
+            {
+                //Delete the Token.
+                localStorage.setItem('LoggedInUser',null);
+                //Redirect to Main Page.
+                $window.location.href = "http://localhost:3000/";
+            };
+            
+            $scope.check_availability = function()
+            {
+                $scope.booking_confirmed = 0;
+                var from_arr= $scope.time_from.toString().split(" ");
+                var time_arr = from_arr[4].toString().split(":");
+    
+                var time_from_hour = time_arr[0];
+                var time_from_mins = time_arr[1];
+    
+                var to_arr = $scope.time_to.toString().split(" ");
+                time_arr = to_arr[4].toString().split(":");
+                var time_to_hour = time_arr[0];
+                var time_to_mins = time_arr[1];
+                
+                var date_now = new Date();
+                var now_arr = date_now.toString().split(" ");
+                var time_now_arr = now_arr[4].toString().split(":");
+    
+                var time_now_hour = time_now_arr[0];
+                var time_now_mins = time_now_arr[1];
+    
+                if(time_now_hour > time_from_hour)
+                {
+                    $scope.response = "Please Select Proper Hour";
+                }
+                else
+                {
+                    if(time_now_hour === time_from_hour)
+                    {
+                        if(time_now_mins > time_from_mins)
+                        {
+                            $scope.response = "Please Select proper Minutes";
+                        }
+                    }
+                    else
+                    {
+                        var loggedInUser = JSON.parse(localStorage.getItem('LoggedInUser'));
+                        if(loggedInUser === null)
+                        {
+                            $scope.login = 1;
+                        }
+                        else 
+                        {
+                            var token = loggedInUser.Token;
+                            var User = loggedInUser.User;
+                            var siteId = JSON.parse(localStorage.getItem('siteId'));
+                            var data = {User : User, siteId : siteId , time_from_hour : time_from_hour ,time_from_mins : time_from_mins , time_to_hour : time_to_hour, time_to_mins : time_to_mins};
+                            var config = {headers : {'Content-Type':'application/json'}};
+                            $http({
+                            method : "POST",
+                            url : 'http://localhost:3000/parkingplaces/checkParkingAvail/',
+                            headers : {
+                                'Content-Type' : 'application/json',
+                                Authorization : token
+                            },
+                            data : data
+                            }).
+                        then(function(Response)
+                        {
+                            $scope.response = Response.data.length;
+                            if(Response.data.success)
+                            {
+                                $scope.show_booked_status = 1;
+                                if(Response.data.length === 3)
+                                {
+                                    $scope.disable_book = 1;
+                                    $scope.p1_empty = 0;
+                                    $scope.p2_empty = 0;
+                                    $scope.p3_empty = 0;
+                                    $scope.p1_booked = 1;
+                                    $scope.p2_booked = 1;
+                                    $scope.p3_booked = 1;
+                                    $scope.parking_status = "Parking for the Selected Time Slot is Full";
+                                }
+                                else 
+                                {
+                                    $scope.parking_status = "Parking is Available";
+                                    $scope.disable_book = 0;
+                                    if(Response.data.length === 0)
+                                    {
+                                        $scope.p1_booked = 0;
+                                        $scope.p1_empty = 1;
+                                        $scope.p2_empty = 1;
+                                        $scope.p2_booked = 0;
+                                        $scope.p3_empty = 1;
+                                        $scope.p3_booked = 0;
+                                    }
+                                    else if(Response.data.length === 1)
+                                    {
+                                        $scope.p1_booked = 1;
+                                        $scope.p1_empty = 0;
+                                        $scope.p2_empty = 1;
+                                        $scope.p2_booked = 0;
+                                        $scope.p3_empty = 1;
+                                        $scope.p3_booked = 0;
+                                    }
+                                    else if(Response.data.length === 2)
+                                    {
+                                        $scope.p1_booked = 1;
+                                        $scope.p1_empty = 0;
+                                        $scope.p2_empty = 0;
+                                        $scope.p2_booked = 1;
+                                        $scope.p3_empty = 1;
+                                        $scope.p3_booked = 0;
+                                    }
+                                    $scope.book_slot_number = (3 - Response.data.length);
+                                }
+                            }
+                            else
+                            {
+                                $scope.login = 1;
+                            }
+                        });
+
+                        }
+                        
+                    }
+                }
+            };
+        });
+    </script>
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>User Profile</title>
+
+    <link rel="stylesheet" type="text/css" href="dist/bootstrap-clockpicker.min.css">
+
+    <!-- Bootstrap Core CSS -->
+    <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- MetisMenu CSS -->
+    <link href="../vendor/metisMenu/metisMenu.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="../dist/css/sb-admin-2.css" rel="stylesheet">
+
+    <!-- Morris Charts CSS -->
+    <link href="../vendor/morrisjs/morris.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="../vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body ng-app="profileApp" ng-controller="Profilecontroller">
+
+    <div id="wrapper">
+
+        <!-- Navigation -->
+        <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
+            <div class="navbar-header">
+                <!-- <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button> -->
+                <a class="navbar-brand" href="index.html">User Profile</a>
+            </div>
+            <!-- /.navbar-header -->
+
+            <ul class="nav navbar-top-links navbar-right">
+                <li>
+                    <a ng-href="http://localhost:3000/login/" ng-show="login==1">LOGIN</a>
+                </li>
+                
+                <li class="dropdown">
+                    <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-user">
+                        <li><a ng-click="log_out()"><i class="fa fa-sign-out fa-fw"></i>Logout</a>
+                        </li>
+                    </ul>
+                    <!-- /.dropdown-user -->
+                </li>
+                <!-- /.dropdown -->
+            </ul>
+            <!-- /.navbar-top-links -->
+
+            <div class="navbar-default sidebar" role="navigation">
+                <div class="sidebar-nav navbar-collapse">
+                    <ul class="nav" id="side-menu">
+                        <li>
+                            <a><i class="fa fa-dashboard fa-fw"></i>NAME : {{name}}</a>
+                        </li>
+                        <li>
+                            <a><i class="fa fa-bar-chart-o fa-fw"></i>EMAIL ID : {{email}}</a>
+                        </li>
+                        <li>
+                            <a><i class="fa fa-table fa-fw"></i>USER NAME : {{username}}</a>
+                        </li>
+                        <li>
+                            <a href="forms.html"><i class="fa fa-edit fa-fw"></i>BALANCE : {{balance}}</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- /.sidebar-collapse -->
+            </div>
+            <!-- /.navbar-static-side -->
+        </nav>
+
+        <div id="page-wrapper">
+            
+            <div class="col-lg-12">
+                <h4 ng-show="login==1" style="color: red">SESSION HAS EXPIRED! PLEASE LOGIN AGAIN.</h4>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1 class="page-header">SITE DETAILS</h1>
+                </div>
+            </div>
+            <!-- /.row -->
+            
+            <div class="row">
+                <div class="col-lg-6 col-md-6">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-map-marker fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">{{siteId}}</div>
+                                    <h5>{{siteAddrDetail}}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="panel panel-green">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-tasks fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">3</div>
+                                    <div>TOTAL PARKINGS</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+
+            <div class="col-lg-12">
+                <h1 class="page-header">FILL IN BOOKING DETAILS</h1>
+            </div>
+            
+            <form>
+            <!-- Date Picker From-->
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="container">
+                        <div>From:</div>
+                            <div class="row">
+                                <input type="time" ng-model="time_from" name="time_from" required>
+                            </div>
+                    </div>
+                </div>
+    
+                    <!-- Date Picker To -->
+                <div class="col-lg-6"> 
+                    <div class="container">
+                        <div>To:</div>   
+                        <div class="row">
+                                <input type="time" ng-model="time_to" name="time_to" required>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.row -->
+            <div style="padding-top: 40px;">
+				<button type="submit" ng-click = "check_availability()" class="btn btn-primary btn-lg btn-block login-btn">CHECK AVAILABILITY</button>
+            </div>
+        </form> 
+
+        <div ng-show="show_booked_status==1" class="col-lg-12" style="padding-top: 50px;">
+            <h1 class="page-header">BOOKED STATUS</h1>
+        </div>
+            
+
+        <div ng-show="show_booked_status==1" class="row" style="padding-top: 50px;">
+                <div ng-show="p1_empty==1" class="col-lg-4 col-md-6">
+                    <div class="panel panel-green">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-map-marker fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">P1</div>
+                                    <div>EMPTY</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="p1_booked==1" class="col-lg-4 col-md-6">
+                    <div class="panel panel-red">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-map-marker fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">P1</div>
+                                    <div>BOOKED</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="p2_empty==1" class="col-lg-4 col-md-6">
+                    <div class="panel panel-green">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-tasks fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">P2</div>
+                                    <div>EMPTY</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="p2_booked==1" class="col-lg-4 col-md-6">
+                    <div class="panel panel-red">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-tasks fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">P2</div>
+                                    <div>BOOKED</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ng-show="p3_empty==1" class="col-lg-4 col-md-6">
+                    <div class="panel panel-green">
+                        <div class="panel-heading" style="height: 125px;">
+                            <div class="row">
+                                <div class="col-xs-3">
+                                    <i class="fa fa-tasks fa-5x"></i>
+                                </div>
+                                <div class="col-xs-9 text-right">
+                                    <div class="huge">P3</div>
+                                    <div>EMPTY</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                    
+                    <div ng-show="p3_booked==1" class="col-lg-4 col-md-6">
+                        <div class="panel panel-red">
+                            <div class="panel-heading" style="height: 125px;">
+                                <div class="row">
+                                    <div class="col-xs-3">
+                                        <i class="fa fa-tasks fa-5x"></i>
+                                    </div>
+                                    <div class="col-xs-9 text-right">
+                                        <div class="huge">P3</div>
+                                        <div>BOOKED</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div ng-show="disable_book==0" style="padding-top: 40px;">
+                    <button type="button" ng-click="book_slot()" class="btn btn-primary btn-lg btn-block login-btn">BOOK MY SLOT</button>
+                </div>
+                <div>
+                    <h3 ng-show="show_booked_status==1" >{{parking_status}}</h3>
+                </div>
+                <div class="row" ng-show="booking_confirmed == 1" style="padding-top: 50px;">
+                    <div class="col-lg-12 col-md-6">
+                        <div class="panel panel-green">
+                            <div class="panel-heading" style="height: 225px;">
+                                <div class="row">
+                                    <div class="col-xs-9 text-left">
+                                        <div class="huge">BOOKING CONFIRMED</div>
+                                        <div>NAME : {{booking_user_name}}</div>
+                                        <div>EMAIL SENT TO : {{booking_email_id}}</div>
+                                        <div>SITE NAME : {{booking_siteName}}</div>
+                                        <div>FROM : {{booking_from_time}}</div>
+                                        <div>TO : {{booking_to_time}}</div>
+                                        <div>SLOT ALLOTED : {{booking_slot}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <!-- /#page-wrapper -->
+
+    </div>
+    <!-- /#wrapper -->
+
+    <!-- jQuery -->
+    <script src="../vendor/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Metis Menu Plugin JavaScript -->
+    <script src="../vendor/metisMenu/metisMenu.min.js"></script>
+
+    <!-- Morris Charts JavaScript -->
+    <script src="../vendor/raphael/raphael.min.js"></script>
+    <script src="../vendor/morrisjs/morris.min.js"></script>
+    <script src="../data/morris-data.js"></script>
+
+    <!-- Custom Theme JavaScript -->
+    <script src="../dist/js/sb-admin-2.js"></script>
+
+</body>
+
+</html>

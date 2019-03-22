@@ -1,0 +1,54 @@
+<html>
+    <style>
+        ul{
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+    
+
+ul {
+    background: #3399ff;
+    padding: 20px;
+}
+
+
+ul li {
+    background: #cce5ff;
+    margin: 5px;
+}
+    </style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script>
+    
+    var app = angular.module('myApp',[]);
+    app.controller('Profilecontroller',function($window,$scope,$http)
+    {
+        $scope.items = ['Inorbit', 'Infinity','Raghuleela'];
+        
+        $scope.clickedPlace = function clickedPlace(index)
+        {
+            localStorage.setItem('siteId',JSON.stringify({siteId : index}));
+            $window.location.href = 'parkingplaces/getStatus';
+        }
+    });
+</script>
+
+<head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+</head>
+<body ng-app="myApp" ng-controller="Profilecontroller">
+    <h1>LIST OF PARKING PLACES</h1>
+    <ul>
+        <li ng-repeat="item in items" >
+        <button ng-click="clickedPlace($index)"  class="list-group-item">{{item}}<span class="badge">TOTAL PARKING SLOTS : 3</span>  </button>
+        </li>
+    </ul>
+    <div>{{clickedItem}}</div>
+
+</body>
+</html>
